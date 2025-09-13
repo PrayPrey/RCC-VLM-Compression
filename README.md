@@ -1,4 +1,4 @@
-# Recursive Cascade Compression (RCC) for Vision-Language Models
+# Recursive Cascade Compression (RCC) for Vision-Language Models (Not REAL)
 
 [![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-3100/)
 [![PyTorch 2.0](https://img.shields.io/badge/pytorch-2.0-red.svg)](https://pytorch.org/)
