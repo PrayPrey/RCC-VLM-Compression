@@ -1,0 +1,423 @@
+# Data Configuration for RCC Experiments
+# Dataset paths, preprocessing, and augmentation settings
+
+# Dataset configuration
+datasets:
+  # Primary training dataset
+  primary_dataset: conceptual_captions
+  # Validation dataset
+  validation_dataset: mscoco
+  # Test datasets (can be multiple)
+  test_datasets: ["imagenet", "flickr30k"]
+  # Enable dataset mixing
+  mix_datasets: false
+  # Dataset mixing ratios (if mix_datasets=true)
+  mixing_ratios:
+    conceptual_captions: 0.5
+    mscoco: 0.3
+    imagenet: 0.1
+    flickr30k: 0.1
+
+# Conceptual Captions dataset (3.3M image-text pairs)
+conceptual_captions:
+  # Dataset name/identifier
+  name: "conceptual_captions"
+  # Dataset version
+  version: "3.3M"
+  # Data root directory
+  root_dir: "${DATA_ROOT}/conceptual_captions"
+  # Image directory
+  image_dir: "${DATA_ROOT}/conceptual_captions/images"
+  # Annotation file
+  annotation_file: "${DATA_ROOT}/conceptual_captions/annotations.json"
+  # Train split
+  train_split: "train"
+  # Validation split
+  val_split: "validation"
+  # Test split
+  test_split: null
+  # Number of samples to use (-1 for all)
+  max_samples: -1
+  # Subset for debugging
+  debug_samples: 1000
+  # Cache preprocessed data
+  cache_dir: "${DATA_ROOT}/cache/conceptual_captions"
+  # Download if not exists
+  download: true
+  # Dataset statistics
+  stats:
+    num_train_samples: 3300000
+    num_val_samples: 15000
+    avg_caption_length: 10.5
+    vocab_size: 50000
+
+# MS-COCO dataset (118K images)
+mscoco:
+  # Dataset name/identifier
+  name: "mscoco"
+  # Dataset version
+  version: "2017"
+  # Data root directory
+  root_dir: "${DATA_ROOT}/mscoco"
+  # Image directories
+  train_image_dir: "${DATA_ROOT}/mscoco/train2017"
+  val_image_dir: "${DATA_ROOT}/mscoco/val2017"
+  # Annotation files
+  train_annotation: "${DATA_ROOT}/mscoco/annotations/captions_train2017.json"
+  val_annotation: "${DATA_ROOT}/mscoco/annotations/captions_val2017.json"
+  # Splits
+  train_split: "train"
+  val_split: "val"
+  test_split: "test"
+  # Number of samples
+  max_samples: -1
+  # Number of captions per image to use
+  captions_per_image: 5
+  # Cache directory
+  cache_dir: "${DATA_ROOT}/cache/mscoco"
+  # Download if not exists
+  download: true
+  # Dataset statistics
+  stats:
+    num_train_images: 82783
+    num_val_images: 40504
+    num_test_images: 40775
+    captions_per_image: 5
+    avg_caption_length: 11.3
+
+# ImageNet-1K dataset
+imagenet:
+  # Dataset name/identifier
+  name: "imagenet"
+  # Dataset version
+  version: "1k"
+  # Data root directory
+  root_dir: "${DATA_ROOT}/imagenet"
+  # Image directories
+  train_dir: "${DATA_ROOT}/imagenet/train"
+  val_dir: "${DATA_ROOT}/imagenet/val"
+  test_dir: "${DATA_ROOT}/imagenet/test"
+  # Metadata files
+  class_index: "${DATA_ROOT}/imagenet/imagenet_class_index.json"
+  synset_words: "${DATA_ROOT}/imagenet/synset_words.txt"
+  # Number of classes
+  num_classes: 1000
+  # Splits
+  train_split: "train"
+  val_split: "val"
+  test_split: "test"
+  # Number of samples
+  max_samples: -1
+  # Cache directory
+  cache_dir: "${DATA_ROOT}/cache/imagenet"
+  # Dataset statistics
+  stats:
+    num_train_images: 1281167
+    num_val_images: 50000
+    num_test_images: 100000
+    num_classes: 1000
+
+# Flickr30K dataset
+flickr30k:
+  # Dataset name/identifier
+  name: "flickr30k"
+  # Dataset version
+  version: "2017"
+  # Data root directory
+  root_dir: "${DATA_ROOT}/flickr30k"
+  # Image directory
+  image_dir: "${DATA_ROOT}/flickr30k/images"
+  # Annotation file
+  annotation_file: "${DATA_ROOT}/flickr30k/captions.txt"
+  # Splits file
+  splits_file: "${DATA_ROOT}/flickr30k/splits.json"
+  # Splits
+  train_split: "train"
+  val_split: "val"
+  test_split: "test"
+  # Number of samples
+  max_samples: -1
+  # Captions per image
+  captions_per_image: 5
+  # Cache directory
+  cache_dir: "${DATA_ROOT}/cache/flickr30k"
+  # Dataset statistics
+  stats:
+    num_train_images: 29000
+    num_val_images: 1000
+    num_test_images: 1000
+    captions_per_image: 5
+    avg_caption_length: 12.0
+
+# Data preprocessing configuration
+preprocessing:
+  # Image preprocessing
+  image:
+    # Resize strategy: resize | center_crop | random_crop
+    resize_strategy: resize
+    # Target size (height, width)
+    size: [224, 224]
+    # Interpolation method: bilinear | bicubic | lanczos
+    interpolation: bicubic
+    # Normalization
+    normalize:
+      # Enable normalization
+      enabled: true
+      # Mean values (ImageNet defaults)
+      mean: [0.48145466, 0.4578275, 0.40821073]
+      # Standard deviation values
+      std: [0.26862954, 0.26130258, 0.27577711]
+    # Convert to RGB
+    convert_rgb: true
+    # Image format: pil | tensor | numpy
+    format: tensor
+
+  # Text preprocessing
+  text:
+    # Tokenizer type: clip | bert | gpt2 | custom
+    tokenizer: clip
+    # Tokenizer model name or path
+    tokenizer_path: "openai/clip-vit-base-patch32"
+    # Maximum sequence length
+    max_length: 77
+    # Padding strategy: max_length | longest | do_not_pad
+    padding: max_length
+    # Truncation strategy
+    truncation: true
+    # Add special tokens
+    add_special_tokens: true
+    # Return token type IDs
+    return_token_type_ids: false
+    # Return attention mask
+    return_attention_mask: true
+    # Text cleaning
+    cleaning:
+      # Convert to lowercase
+      lowercase: true
+      # Remove special characters
+      remove_special_chars: false
+      # Remove extra whitespace
+      strip_whitespace: true
+      # Remove HTML tags
+      remove_html: true
+      # Fix unicode
+      fix_unicode: true
+
+  # General preprocessing
+  general:
+    # Number of preprocessing workers
+    num_workers: 8
+    # Prefetch factor
+    prefetch_factor: 2
+    # Persistent workers
+    persistent_workers: true
+    # Drop last batch
+    drop_last: true
+    # Shuffle data
+    shuffle: true
+    # Random seed for shuffling
+    seed: 42
+
+# Data augmentation configuration
+augmentation:
+  # Enable augmentation
+  enabled: true
+  # Augmentation probability
+  prob: 0.5
+
+  # Image augmentation
+  image:
+    # Random horizontal flip
+    random_flip:
+      enabled: true
+      prob: 0.5
+    # Random rotation
+    random_rotation:
+      enabled: true
+      degrees: 10
+      prob: 0.3
+    # Color jitter
+    color_jitter:
+      enabled: true
+      brightness: 0.4
+      contrast: 0.4
+      saturation: 0.4
+      hue: 0.1
+      prob: 0.3
+    # Random resized crop
+    random_resized_crop:
+      enabled: true
+      scale: [0.8, 1.0]
+      ratio: [0.75, 1.33]
+      prob: 0.5
+    # Random grayscale
+    random_grayscale:
+      enabled: false
+      prob: 0.1
+    # Gaussian blur
+    gaussian_blur:
+      enabled: true
+      kernel_size: 5
+      sigma: [0.1, 2.0]
+      prob: 0.2
+    # Random erasing
+    random_erasing:
+      enabled: true
+      prob: 0.25
+      scale: [0.02, 0.33]
+      ratio: [0.3, 3.3]
+    # AutoAugment
+    auto_augment:
+      enabled: false
+      policy: "imagenet"
+    # RandAugment
+    rand_augment:
+      enabled: true
+      num_ops: 2
+      magnitude: 9
+
+  # Text augmentation
+  text:
+    # Random word deletion
+    word_deletion:
+      enabled: false
+      prob: 0.1
+      max_words: 2
+    # Random word substitution
+    word_substitution:
+      enabled: false
+      prob: 0.1
+      method: "synonym"  # synonym | random | mask
+    # Back translation
+    back_translation:
+      enabled: false
+      prob: 0.2
+      languages: ["fr", "de", "es"]
+    # Paraphrasing
+    paraphrasing:
+      enabled: false
+      prob: 0.2
+      model: "t5-base"
+
+  # Multimodal augmentation
+  multimodal:
+    # MixUp
+    mixup:
+      enabled: true
+      alpha: 0.2
+      prob: 0.3
+    # CutMix
+    cutmix:
+      enabled: false
+      alpha: 1.0
+      prob: 0.3
+    # Cross-modal masking
+    cross_modal_mask:
+      enabled: true
+      image_mask_ratio: 0.15
+      text_mask_ratio: 0.15
+      prob: 0.2
+
+# Data loading configuration
+dataloader:
+  # Batch size per GPU
+  batch_size: 64
+  # Validation batch size
+  val_batch_size: 128
+  # Number of workers for data loading
+  num_workers: 8
+  # Pin memory for GPU transfer
+  pin_memory: true
+  # Prefetch factor
+  prefetch_factor: 2
+  # Persistent workers across epochs
+  persistent_workers: true
+  # Drop last incomplete batch
+  drop_last: true
+  # Shuffle training data
+  shuffle_train: true
+  # Shuffle validation data
+  shuffle_val: false
+  # Collate function: default | custom
+  collate_fn: default
+
+# Data sampling configuration
+sampling:
+  # Sampling strategy: random | balanced | weighted | stratified
+  strategy: random
+  # Weighted sampling
+  weighted:
+    # Enable weighted sampling
+    enabled: false
+    # Class weights: auto | manual | inverse
+    weights: auto
+    # Manual weights (if weights=manual)
+    class_weights: null
+  # Balanced sampling
+  balanced:
+    # Enable balanced sampling
+    enabled: false
+    # Balance by: class | dataset | length
+    balance_by: class
+  # Few-shot sampling
+  few_shot:
+    # Enable few-shot sampling
+    enabled: false
+    # Number of shots per class
+    num_shots: 5
+    # Sampling seed
+    seed: 42
+
+# Data validation configuration
+data_validation:
+  # Validate data integrity
+  validate_integrity: true
+  # Check for missing files
+  check_missing: true
+  # Check for corrupted images
+  check_corrupted: true
+  # Remove invalid samples
+  remove_invalid: true
+  # Validation frequency (in epochs)
+  validation_frequency: 5
+  # Log validation results
+  log_validation: true
+
+# Caching configuration
+caching:
+  # Enable data caching
+  enabled: true
+  # Cache directory
+  cache_dir: "${DATA_ROOT}/cache"
+  # Cache format: pickle | hdf5 | tfrecord | arrow
+  format: arrow
+  # Cache preprocessed data
+  cache_preprocessed: true
+  # Cache augmented data
+  cache_augmented: false
+  # Maximum cache size (GB)
+  max_cache_size: 100
+  # Cache eviction policy: lru | lfu | fifo
+  eviction_policy: lru
+
+# Data streaming configuration (for large datasets)
+streaming:
+  # Enable streaming mode
+  enabled: false
+  # Buffer size (in samples)
+  buffer_size: 10000
+  # Shuffle buffer size
+  shuffle_buffer: 1000
+  # Prefetch batches
+  prefetch: 10
+
+# Environment variables for paths
+environment:
+  # Data root directory
+  DATA_ROOT: "/data/rcc_experiments"
+  # Output directory
+  OUTPUT_DIR: "/output/rcc_experiments"
+  # Cache directory
+  CACHE_DIR: "/cache/rcc_experiments"
+  # Model checkpoint directory
+  CHECKPOINT_DIR: "/checkpoints/rcc_experiments"

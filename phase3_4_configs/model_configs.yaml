@@ -1,0 +1,247 @@
+# Model Architecture Configuration for RCC Experiments
+# Vision-Language Models with Compression Support
+
+# Model selection and initialization
+model:
+  # Model type: clip_vit_base | blip_large | custom
+  type: clip_vit_base
+
+  # Pretrained model paths or HuggingFace model IDs
+  pretrained:
+    clip_vit_base: "openai/clip-vit-base-patch32"  # 151M params
+    blip_large: "Salesforce/blip-image-captioning-large"  # 447M params
+    custom_checkpoint: "${MODEL_CHECKPOINT_PATH}"  # Environment variable override
+
+  # Model initialization settings
+  initialization:
+    # Whether to load pretrained weights
+    from_pretrained: true
+    # Random initialization seed for reproducibility
+    seed: 42
+    # Weight initialization strategy if not pretrained: xavier | kaiming | normal
+    init_strategy: xavier
+    # Standard deviation for normal initialization
+    init_std: 0.02
+    # Gain for xavier/kaiming initialization
+    init_gain: 1.0
+
+# CLIP-ViT-Base specific configuration
+clip_vit_base:
+  vision_encoder:
+    # Image size for input
+    image_size: 224
+    # Patch size for vision transformer
+    patch_size: 32
+    # Number of channels in input image
+    num_channels: 3
+    # Hidden dimension size
+    hidden_size: 768
+    # Number of transformer layers
+    num_layers: 12
+    # Number of attention heads
+    num_attention_heads: 12
+    # Intermediate FFN dimension
+    intermediate_size: 3072
+    # Dropout probability
+    dropout: 0.1
+    # Attention dropout probability
+    attention_dropout: 0.1
+    # Layer normalization epsilon
+    layer_norm_eps: 1e-6
+    # Activation function: gelu | relu | silu
+    activation: gelu
+
+  text_encoder:
+    # Vocabulary size
+    vocab_size: 49408
+    # Maximum sequence length
+    max_position_embeddings: 77
+    # Hidden dimension size
+    hidden_size: 512
+    # Number of transformer layers
+    num_layers: 12
+    # Number of attention heads
+    num_attention_heads: 8
+    # Intermediate FFN dimension
+    intermediate_size: 2048
+    # Dropout probability
+    dropout: 0.1
+    # Attention dropout probability
+    attention_dropout: 0.1
+    # Layer normalization epsilon
+    layer_norm_eps: 1e-6
+    # Activation function
+    activation: gelu
+
+  # Projection head configuration
+  projection:
+    # Projection dimension for multimodal alignment
+    projection_dim: 512
+    # Whether to use bias in projection layers
+    use_bias: false
+    # Dropout after projection
+    projection_dropout: 0.1
+
+# BLIP-Large specific configuration
+blip_large:
+  vision_encoder:
+    # Image size for input
+    image_size: 384
+    # Patch size for vision transformer
+    patch_size: 16
+    # Number of channels
+    num_channels: 3
+    # Hidden dimension size
+    hidden_size: 1024
+    # Number of transformer layers
+    num_layers: 24
+    # Number of attention heads
+    num_attention_heads: 16
+    # Intermediate FFN dimension
+    intermediate_size: 4096
+    # Dropout probability
+    dropout: 0.1
+    # Attention dropout probability
+    attention_dropout: 0.1
+    # Layer normalization epsilon
+    layer_norm_eps: 1e-6
+    # Activation function
+    activation: gelu
+
+  text_decoder:
+    # Vocabulary size
+    vocab_size: 30524
+    # Maximum sequence length
+    max_position_embeddings: 512
+    # Hidden dimension size
+    hidden_size: 768
+    # Number of decoder layers
+    num_layers: 12
+    # Number of attention heads
+    num_attention_heads: 12
+    # Intermediate FFN dimension
+    intermediate_size: 3072
+    # Dropout probability
+    dropout: 0.1
+    # Attention dropout probability
+    attention_dropout: 0.1
+    # Cross-attention dropout
+    cross_attention_dropout: 0.1
+    # Layer normalization epsilon
+    layer_norm_eps: 1e-6
+    # Activation function
+    activation: gelu
+    # Use causal mask for autoregressive generation
+    use_causal_mask: true
+
+  # Multimodal fusion configuration
+  fusion:
+    # Fusion strategy: cross_attention | concatenation | gated
+    strategy: cross_attention
+    # Number of cross-modal layers
+    num_cross_layers: 6
+    # Hidden size for cross-modal attention
+    cross_hidden_size: 768
+    # Number of cross-attention heads
+    cross_num_heads: 12
+
+# Model quantization settings (for baseline comparisons)
+quantization:
+  # Enable quantization: false | int8 | int4
+  enabled: false
+  # Quantization method: dynamic | static | qat
+  method: dynamic
+  # Calibration dataset size for static quantization
+  calibration_size: 1000
+  # Quantize which parts: weights | activations | both
+  quantize_target: weights
+
+# Mixed precision settings
+mixed_precision:
+  # Enable automatic mixed precision
+  enabled: true
+  # Precision level: fp16 | bf16 | fp32
+  precision: fp16
+  # Loss scaling method: dynamic | static
+  loss_scale: dynamic
+  # Initial loss scale for static scaling
+  init_scale: 65536
+  # Growth interval for dynamic scaling
+  growth_interval: 2000
+  # Growth factor for dynamic scaling
+  growth_factor: 2.0
+  # Backoff factor for dynamic scaling
+  backoff_factor: 0.5
+
+# Model validation settings
+validation:
+  # Check for NaN/Inf in outputs
+  check_numerics: true
+  # Gradient clipping value (0 to disable)
+  gradient_clip_val: 1.0
+  # Gradient clipping norm type: 2 | inf
+  gradient_clip_norm: 2
+  # Monitor gradient norms
+  monitor_gradients: true
+  # Warn on large gradient norms above this threshold
+  gradient_warn_threshold: 100.0
+
+# Distributed training model settings
+distributed:
+  # Enable distributed data parallel
+  enabled: true
+  # Backend: nccl | gloo | mpi
+  backend: nccl
+  # Find unused parameters in DDP
+  find_unused_parameters: false
+  # Gradient as bucket view for efficiency
+  gradient_as_bucket_view: true
+  # Static graph optimization
+  static_graph: false
+
+# Model profiling settings
+profiling:
+  # Enable model profiling
+  enabled: false
+  # Profile memory usage
+  profile_memory: true
+  # Profile execution time
+  profile_time: true
+  # Warmup steps before profiling
+  warmup_steps: 10
+  # Number of steps to profile
+  profile_steps: 100
+
+# Parameter count targets and constraints
+parameter_targets:
+  # Original parameter counts (for reference)
+  original:
+    clip_vit_base: 151000000  # 151M
+    blip_large: 447000000  # 447M
+
+  # Target compression ratios
+  compression_targets:
+    # Minimum compression ratio (>99.5% reduction)
+    min_compression_ratio: 0.995
+    # Target parameter reduction percentages per stage
+    stage_targets:
+      dare: 0.70  # 70% reduction
+      nullu: 0.85  # 85% reduction from DARE output
+      alphaedit: 0.50  # 50% reduction from Nullu output
+    # Final parameter count targets
+    final_targets:
+      clip_vit_base: 755000  # <0.5% of original (151M * 0.005)
+      blip_large: 2235000  # <0.5% of original (447M * 0.005)
+
+# Model checkpoint settings
+checkpointing:
+  # Enable gradient checkpointing for memory efficiency
+  gradient_checkpointing: true
+  # Checkpoint attention layers
+  checkpoint_attention: true
+  # Checkpoint FFN layers
+  checkpoint_ffn: true
+  # Number of checkpointed layers (0 for all)
+  checkpoint_layers: 0
+  # Save activation checkpoints for analysis
+  save_activations: false

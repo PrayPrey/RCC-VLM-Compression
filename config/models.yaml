@@ -1,0 +1,35 @@
+# Model configurations for RCC compression
+clip_base:
+  model_name: "openai/clip-vit-base-patch32"
+  embedding_dim: 512
+  vision_layers: 12
+  text_layers: 12
+  patch_size: 32
+  image_size: 224
+  max_text_length: 77
+  vocab_size: 49408
+
+clip_large:
+  model_name: "openai/clip-vit-large-patch14"
+  embedding_dim: 768
+  vision_layers: 24
+  text_layers: 12
+  patch_size: 14
+  image_size: 224
+  max_text_length: 77
+
+blip_base:
+  model_name: "Salesforce/blip-image-captioning-base"
+  embedding_dim: 768
+  vision_layers: 12
+  text_layers: 12
+  max_caption_length: 50
+  image_size: 384
+
+blip_large:
+  model_name: "Salesforce/blip-image-captioning-large"
+  embedding_dim: 768
+  vision_layers: 24
+  text_layers: 12
+  max_caption_length: 50
+  image_size: 384

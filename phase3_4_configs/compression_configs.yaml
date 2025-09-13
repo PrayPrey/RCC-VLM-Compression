@@ -1,0 +1,403 @@
+# Compression Configuration for Recursive Cascade Compression (RCC)
+# Three-stage cascade: DARE → Nullu → AlphaEdit
+
+# Global compression settings
+compression:
+  # Enable compression pipeline
+  enabled: true
+  # Compression mode: cascade | parallel | sequential
+  mode: cascade
+  # Number of compression stages
+  num_stages: 3
+  # Stage execution order
+  stage_order: ["dare", "nullu", "alphaedit"]
+  # Save intermediate compressed models
+  save_intermediate: true
+  # Validate compression at each stage
+  validate_stages: true
+  # Performance threshold to maintain (95% of original)
+  performance_threshold: 0.95
+  # Maximum performance degradation allowed
+  max_degradation: 0.05
+
+# Stage 1: DARE (Drop And REscale) - Structured pruning
+dare:
+  # Enable DARE compression
+  enabled: true
+
+  # Pruning strategy
+  pruning:
+    # Pruning method: magnitude | gradient | random | structured
+    method: structured
+    # Pruning schedule: linear | exponential | polynomial | cosine
+    schedule: polynomial
+    # Target sparsity ratio (0.7 = 70% pruning)
+    target_sparsity: 0.70
+    # Initial sparsity for gradual pruning
+    initial_sparsity: 0.0
+    # Final sparsity after pruning
+    final_sparsity: 0.70
+    # Number of pruning iterations
+    num_iterations: 100
+    # Frequency of pruning updates (in training steps)
+    frequency: 500
+    # Polynomial power for schedule
+    power: 3.0
+
+  # Structured pruning configuration
+  structured:
+    # Pruning granularity: weight | channel | filter | layer | head
+    granularity: channel
+    # Pruning criteria: l1 | l2 | linf | importance
+    criteria: l2
+    # Compute importance scores globally
+    global_pruning: true
+    # Preserve specific layers from pruning
+    preserve_layers: ["embeddings", "final_projection"]
+    # Minimum channels/filters to preserve per layer
+    min_preserved: 16
+
+  # Rescaling configuration
+  rescaling:
+    # Enable rescaling after pruning
+    enabled: true
+    # Rescaling factor computation: adaptive | fixed | learned
+    method: adaptive
+    # Fixed rescaling factor (if method=fixed)
+    fixed_factor: 1.4286  # 1/(1-0.3) for 30% remaining
+    # Adaptive rescaling parameters
+    adaptive:
+      # Base rescaling formula: 1/(1-sparsity)^power
+      power: 1.0
+      # Clip rescaling factor
+      min_factor: 1.0
+      max_factor: 10.0
+      # Layer-wise rescaling adjustment
+      layer_wise: true
+
+  # Fine-tuning after DARE
+  finetuning:
+    # Enable fine-tuning
+    enabled: true
+    # Number of fine-tuning epochs
+    epochs: 5
+    # Learning rate for fine-tuning
+    learning_rate: 1e-5
+    # Learning rate schedule
+    lr_schedule: cosine
+    # Warmup ratio
+    warmup_ratio: 0.1
+
+  # DARE-specific hyperparameters for Bayesian optimization
+  hyperparameter_ranges:
+    target_sparsity: [0.60, 0.80]  # Range for sparsity search
+    pruning_power: [2.0, 4.0]  # Polynomial power range
+    rescaling_power: [0.8, 1.2]  # Rescaling adjustment range
+    finetuning_lr: [5e-6, 5e-5]  # Learning rate range
+
+# Stage 2: Nullu - Low-rank decomposition
+nullu:
+  # Enable Nullu compression
+  enabled: true
+
+  # Rank reduction configuration
+  rank_reduction:
+    # Decomposition method: svd | nmf | tucker | cp
+    method: svd
+    # Target rank reduction ratio (0.85 = 85% reduction)
+    target_reduction: 0.85
+    # Rank selection strategy: fixed | adaptive | energy
+    rank_strategy: energy
+    # Energy preservation threshold (for energy strategy)
+    energy_threshold: 0.95
+    # Minimum rank to preserve
+    min_rank: 8
+    # Maximum rank allowed
+    max_rank: 256
+
+  # Layer-wise rank configuration
+  layer_config:
+    # Apply rank reduction to specific layer types
+    target_layers: ["attention", "ffn", "projection"]
+    # Attention layer rank reduction
+    attention:
+      # Reduce Q, K, V matrices
+      reduce_qkv: true
+      # Rank reduction ratio for attention
+      rank_ratio: 0.25
+      # Preserve attention heads
+      preserve_heads: 2
+    # FFN layer rank reduction
+    ffn:
+      # Reduce intermediate layers
+      reduce_intermediate: true
+      # Rank reduction ratio for FFN
+      rank_ratio: 0.15
+      # Minimum intermediate dimension
+      min_intermediate: 128
+    # Projection layer rank reduction
+    projection:
+      # Reduce projection matrices
+      reduce_projection: true
+      # Rank reduction ratio
+      rank_ratio: 0.30
+
+  # Null space exploitation
+  null_space:
+    # Enable null space analysis
+    enabled: true
+    # Null space threshold (singular values below this are nullified)
+    threshold: 1e-6
+    # Adaptive threshold based on noise floor
+    adaptive_threshold: true
+    # Noise floor estimation method: median | mean | percentile
+    noise_estimation: percentile
+    # Percentile for noise floor (if method=percentile)
+    noise_percentile: 5
+
+  # Matrix factorization settings
+  factorization:
+    # Initialization for factorized matrices: random | svd | pretrained
+    initialization: svd
+    # Add bias terms to factorized layers
+    use_bias: false
+    # Freeze certain factors during training
+    freeze_factors: false
+    # Regularization for factors
+    regularization:
+      # L2 regularization weight
+      l2_weight: 1e-4
+      # Orthogonality constraint weight
+      orthogonal_weight: 1e-3
+
+  # Fine-tuning after Nullu
+  finetuning:
+    # Enable fine-tuning
+    enabled: true
+    # Number of fine-tuning epochs
+    epochs: 5
+    # Learning rate
+    learning_rate: 5e-6
+    # Only train factorized components
+    train_factors_only: true
+
+  # Nullu-specific hyperparameter ranges
+  hyperparameter_ranges:
+    energy_threshold: [0.90, 0.98]  # Energy preservation range
+    rank_ratio_attention: [0.15, 0.35]  # Attention rank ratio
+    rank_ratio_ffn: [0.10, 0.25]  # FFN rank ratio
+    rank_ratio_projection: [0.20, 0.40]  # Projection rank ratio
+    finetuning_lr: [1e-6, 1e-5]  # Learning rate range
+
+# Stage 3: AlphaEdit - Adaptive parameter scaling
+alphaedit:
+  # Enable AlphaEdit compression
+  enabled: true
+
+  # Adaptive scaling configuration
+  scaling:
+    # Scaling method: learned | statistical | importance
+    method: learned
+    # Initial scaling factor
+    initial_scale: 1.0
+    # Scaling bounds
+    min_scale: 0.01
+    max_scale: 2.0
+    # Layer-wise scaling
+    layer_wise: true
+    # Channel-wise scaling
+    channel_wise: true
+
+  # Learned scaling parameters
+  learned_scaling:
+    # Number of scaling parameters per layer
+    num_scales: 32
+    # Scaling parameter initialization: uniform | normal | ones
+    initialization: ones
+    # Learning rate for scaling parameters
+    learning_rate: 1e-3
+    # Separate optimizer for scaling parameters
+    separate_optimizer: true
+    # Optimizer type: adam | sgd | adamw
+    optimizer: adamw
+    # Weight decay for scaling parameters
+    weight_decay: 1e-4
+
+  # Statistical scaling
+  statistical_scaling:
+    # Statistics to use: mean | std | percentile | iqr
+    statistic: std
+    # Percentile value (if statistic=percentile)
+    percentile: 95
+    # Smoothing factor for statistics
+    smoothing: 0.9
+    # Update frequency (in steps)
+    update_frequency: 100
+
+  # Importance-based scaling
+  importance_scaling:
+    # Importance metric: gradient | fisher | taylor
+    metric: fisher
+    # Number of samples for importance estimation
+    num_samples: 1000
+    # Importance threshold for scaling
+    threshold: 0.1
+    # Normalize importance scores
+    normalize: true
+
+  # Quantization integration
+  quantization:
+    # Enable quantization with AlphaEdit
+    enabled: true
+    # Bits for quantization: 8 | 4 | 2
+    bits: 4
+    # Quantization scheme: uniform | non-uniform | learned
+    scheme: learned
+    # Symmetric quantization
+    symmetric: false
+    # Per-channel quantization
+    per_channel: true
+
+  # Parameter editing rules
+  editing_rules:
+    # Edit small magnitude parameters
+    edit_small_magnitude: true
+    # Magnitude threshold
+    magnitude_threshold: 1e-3
+    # Edit redundant parameters
+    edit_redundant: true
+    # Redundancy threshold (correlation)
+    redundancy_threshold: 0.95
+    # Preserve critical parameters
+    preserve_critical: true
+    # Critical parameter identification: gradient | hessian | path
+    critical_metric: gradient
+
+  # Fine-tuning configuration
+  finetuning:
+    # Enable fine-tuning
+    enabled: true
+    # Number of epochs
+    epochs: 10
+    # Learning rate
+    learning_rate: 1e-6
+    # Train only scaling parameters
+    scale_only: false
+    # Knowledge distillation weight
+    distillation_weight: 0.5
+
+  # AlphaEdit-specific hyperparameter ranges
+  hyperparameter_ranges:
+    num_scales: [16, 64]  # Number of scaling parameters
+    scaling_lr: [5e-4, 5e-3]  # Scaling learning rate
+    magnitude_threshold: [1e-4, 1e-2]  # Magnitude threshold
+    quantization_bits: [2, 8]  # Quantization bits
+    distillation_weight: [0.3, 0.7]  # Distillation weight
+
+# Cascade optimization settings
+cascade_optimization:
+  # Optimization strategy: sequential | joint | iterative
+  strategy: iterative
+  # Number of cascade iterations
+  num_iterations: 3
+  # Performance recovery between stages
+  recovery:
+    # Enable performance recovery
+    enabled: true
+    # Recovery method: distillation | finetuning | both
+    method: both
+    # Maximum recovery epochs per stage
+    max_epochs: 5
+    # Early stopping patience
+    patience: 3
+    # Minimum improvement threshold
+    min_improvement: 0.001
+
+  # Stage interaction settings
+  stage_interaction:
+    # Share information between stages
+    share_info: true
+    # Information to share: statistics | importance | gradients
+    shared_info: ["statistics", "importance"]
+    # Adjust subsequent stages based on previous
+    adaptive_stages: true
+
+  # Compression scheduling
+  scheduling:
+    # Schedule type: linear | exponential | adaptive
+    type: adaptive
+    # Compression rate per iteration
+    compression_rate: 0.1
+    # Minimum compression per stage
+    min_compression: 0.05
+    # Maximum compression per stage
+    max_compression: 0.30
+
+# Bayesian optimization configuration
+bayesian_optimization:
+  # Enable Bayesian optimization
+  enabled: true
+  # Optimization library: optuna | hyperopt | skopt
+  library: optuna
+  # Number of trials
+  n_trials: 100
+  # Optimization direction: minimize | maximize
+  direction: maximize
+  # Metric to optimize
+  metric: "performance_retention"
+  # Sampler type: tpe | random | cmaes
+  sampler: tpe
+  # Pruner type: median | hyperband | none
+  pruner: hyperband
+  # Parallel trials
+  n_jobs: 4
+  # Random seed
+  seed: 42
+
+  # Multi-objective optimization
+  multi_objective:
+    # Enable multi-objective optimization
+    enabled: true
+    # Objectives to optimize
+    objectives:
+      - name: "compression_ratio"
+        direction: maximize
+        weight: 0.3
+      - name: "performance_retention"
+        direction: maximize
+        weight: 0.5
+      - name: "inference_speed"
+        direction: maximize
+        weight: 0.2
+
+# Compression validation settings
+validation:
+  # Validation frequency (in steps)
+  frequency: 1000
+  # Validation metrics
+  metrics:
+    - "compression_ratio"
+    - "parameter_count"
+    - "performance_score"
+    - "inference_time"
+    - "memory_usage"
+  # Performance benchmarks
+  benchmarks:
+    # Zero-shot evaluation
+    zero_shot: true
+    # Few-shot evaluation
+    few_shot: true
+    # Number of shots for few-shot
+    num_shots: 5
+    # Downstream tasks for evaluation
+    tasks: ["image_classification", "image_captioning", "image_retrieval"]
+  # Compression verification
+  verification:
+    # Verify parameter count reduction
+    check_params: true
+    # Verify model size reduction
+    check_size: true
+    # Verify inference speedup
+    check_speed: true
+    # Tolerance for verification
+    tolerance: 0.01

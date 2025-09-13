@@ -1,0 +1,35 @@
+# Environment configuration for RCC compression
+system:
+  cuda_version: "11.8"
+  python_version: "3.10"
+  num_gpus: 4
+  gpu_type: "A100-80GB"
+  distributed_backend: "nccl"
+  fp16_opt_level: "O2"
+
+paths:
+  data_dir: "./data/datasets"
+  checkpoint_dir: "./checkpoints"
+  results_dir: "./results"
+  cache_dir: "./cache"
+  log_dir: "./logs"
+  models_dir: "./models"
+
+reproducibility:
+  seed: 42
+  deterministic: true
+  benchmark: false
+  cuda_deterministic: true
+  cudnn_benchmark: false
+
+monitoring:
+  use_wandb: true
+  wandb_project: "rcc-compression"
+  wandb_entity: null
+  use_tensorboard: true
+  tensorboard_dir: "./tensorboard"
+
+resources:
+  max_memory_gb: 80
+  num_cpu_threads: 32
+  dataloader_workers: 8

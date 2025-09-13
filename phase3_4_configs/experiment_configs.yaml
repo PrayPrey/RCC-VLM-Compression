@@ -1,0 +1,559 @@
+# Experiment Configuration for RCC Pipeline
+# Experiment tracking, reproducibility, and monitoring settings
+
+# Experiment metadata
+experiment:
+  # Experiment name (use environment variable or timestamp)
+  name: "${EXPERIMENT_NAME:-rcc_cascade_${TIMESTAMP}}"
+  # Experiment ID (for tracking)
+  id: "${EXPERIMENT_ID:-${RANDOM_UUID}}"
+  # Experiment description
+  description: "Recursive Cascade Compression for Vision-Language Models"
+  # Experiment version
+  version: "1.0.0"
+  # Author/team
+  author: "RCC Research Team"
+  # Tags for organization
+  tags:
+    - "compression"
+    - "vision-language"
+    - "cascade"
+    - "knowledge-distillation"
+    - "dare"
+    - "nullu"
+    - "alphaedit"
+  # Experiment type: baseline | ablation | full | debug
+  type: full
+  # Timestamp (auto-generated)
+  timestamp: "${TIMESTAMP}"
+  # Git commit hash (for code versioning)
+  git_commit: "${GIT_COMMIT}"
+  # Branch name
+  git_branch: "${GIT_BRANCH}"
+
+# Reproducibility settings
+reproducibility:
+  # Random seed for all components
+  seed: 42
+  # Python random seed
+  python_seed: 42
+  # NumPy random seed
+  numpy_seed: 42
+  # PyTorch random seed
+  torch_seed: 42
+  # CUDA random seed
+  cuda_seed: 42
+  # Enable deterministic operations
+  deterministic: true
+  # Enable CUDNN deterministic
+  cudnn_deterministic: true
+  # Disable CUDNN benchmark
+  cudnn_benchmark: false
+  # Set worker seed function
+  worker_seed: true
+  # Environment variables for reproducibility
+  env_vars:
+    PYTHONHASHSEED: "42"
+    CUBLAS_WORKSPACE_CONFIG: ":4096:8"
+    OMP_NUM_THREADS: "1"
+    MKL_NUM_THREADS: "1"
+
+# Experiment tracking configuration
+tracking:
+  # Enable experiment tracking
+  enabled: true
+  # Tracking backends: wandb | mlflow | tensorboard | neptune | comet
+  backends:
+    - wandb
+    - tensorboard
+    - mlflow
+
+  # Weights & Biases configuration
+  wandb:
+    # Enable W&B tracking
+    enabled: true
+    # Project name
+    project: "rcc-vision-language"
+    # Entity (team/organization)
+    entity: "${WANDB_ENTITY}"
+    # Run name
+    name: "${EXPERIMENT_NAME}"
+    # Run ID (for resuming)
+    id: "${EXPERIMENT_ID}"
+    # Run notes
+    notes: "RCC cascade compression experiment"
+    # Tags
+    tags: ${experiment.tags}
+    # Config to log
+    config:
+      log_model_config: true
+      log_compression_config: true
+      log_training_config: true
+      log_data_config: true
+    # What to log
+    log:
+      gradients: true
+      parameters: true
+      activations: false
+      model: true
+      code: true
+      data_samples: true
+    # Log frequency
+    log_freq:
+      gradients: 100
+      parameters: 500
+      metrics: 10
+    # Save code
+    save_code: true
+    # Offline mode
+    offline: false
+
+  # MLflow configuration
+  mlflow:
+    # Enable MLflow tracking
+    enabled: true
+    # Tracking URI
+    tracking_uri: "${MLFLOW_TRACKING_URI:-file://${OUTPUT_DIR}/mlruns}"
+    # Experiment name
+    experiment_name: "rcc_compression"
+    # Run name
+    run_name: "${EXPERIMENT_NAME}"
+    # Artifact location
+    artifact_location: "${OUTPUT_DIR}/mlflow_artifacts"
+    # Registry URI (for model registry)
+    registry_uri: null
+    # Tags
+    tags: ${experiment.tags}
+    # Log models
+    log_models: true
+    # Log metrics
+    log_metrics: true
+    # Log parameters
+    log_params: true
+    # Log artifacts
+    log_artifacts: true
+
+  # TensorBoard configuration
+  tensorboard:
+    # Enable TensorBoard
+    enabled: true
+    # Log directory
+    log_dir: "${OUTPUT_DIR}/tensorboard/${EXPERIMENT_NAME}"
+    # Flush seconds
+    flush_secs: 30
+    # Log scalars
+    log_scalars: true
+    # Log images
+    log_images: true
+    # Log histograms
+    log_histograms: true
+    # Log graph
+    log_graph: true
+    # Log embeddings
+    log_embeddings: false
+    # Log profiling
+    log_profiling: true
+    # Histogram frequency
+    histogram_freq: 100
+    # Image frequency
+    image_freq: 500
+
+  # Neptune configuration
+  neptune:
+    # Enable Neptune
+    enabled: false
+    # Project name
+    project: "${NEPTUNE_PROJECT}"
+    # API token
+    api_token: "${NEPTUNE_API_TOKEN}"
+    # Run name
+    name: "${EXPERIMENT_NAME}"
+    # Description
+    description: "RCC compression experiment"
+    # Tags
+    tags: ${experiment.tags}
+    # Source files to log
+    source_files: ["*.py", "*.yaml"]
+
+# Monitoring configuration
+monitoring:
+  # Enable monitoring
+  enabled: true
+
+  # System monitoring
+  system:
+    # Monitor CPU usage
+    cpu: true
+    # Monitor memory usage
+    memory: true
+    # Monitor disk I/O
+    disk_io: true
+    # Monitor network I/O
+    network_io: false
+    # Monitoring frequency (seconds)
+    frequency: 60
+
+  # GPU monitoring
+  gpu:
+    # Monitor GPU utilization
+    utilization: true
+    # Monitor GPU memory
+    memory: true
+    # Monitor GPU temperature
+    temperature: true
+    # Monitor GPU power
+    power: true
+    # Monitoring frequency (seconds)
+    frequency: 30
+    # Per-GPU monitoring
+    per_gpu: true
+
+  # Model monitoring
+  model:
+    # Monitor parameter count
+    parameter_count: true
+    # Monitor parameter norms
+    parameter_norms: true
+    # Monitor gradient norms
+    gradient_norms: true
+    # Monitor activation statistics
+    activation_stats: false
+    # Monitor layer outputs
+    layer_outputs: false
+    # Monitoring frequency (steps)
+    frequency: 100
+
+  # Training monitoring
+  training:
+    # Monitor loss components
+    loss_components: true
+    # Monitor learning rate
+    learning_rate: true
+    # Monitor gradient statistics
+    gradient_stats: true
+    # Monitor batch time
+    batch_time: true
+    # Monitor data loading time
+    data_time: true
+    # Monitoring frequency (steps)
+    frequency: 10
+
+  # Compression monitoring
+  compression:
+    # Monitor compression ratio
+    compression_ratio: true
+    # Monitor sparsity
+    sparsity: true
+    # Monitor rank reduction
+    rank_reduction: true
+    # Monitor quantization error
+    quantization_error: true
+    # Monitor parameter distribution
+    parameter_distribution: true
+    # Monitoring frequency (steps)
+    frequency: 100
+
+  # Alerts and notifications
+  alerts:
+    # Enable alerts
+    enabled: true
+    # Alert channels: email | slack | webhook
+    channels: ["slack"]
+    # Alert conditions
+    conditions:
+      # Low GPU utilization
+      low_gpu_util:
+        threshold: 0.3
+        duration: 300  # seconds
+      # High memory usage
+      high_memory:
+        threshold: 0.95
+        duration: 60
+      # NaN loss
+      nan_loss:
+        immediate: true
+      # Training stalled
+      training_stalled:
+        threshold: 1000  # steps without improvement
+      # Low compression ratio
+      low_compression:
+        threshold: 0.90  # Below 90% compression
+
+# Checkpointing configuration
+checkpointing:
+  # Enable checkpointing
+  enabled: true
+  # Checkpoint directory
+  dir: "${OUTPUT_DIR}/checkpoints/${EXPERIMENT_NAME}"
+  # Save frequency (steps)
+  save_frequency: 1000
+  # Save frequency (epochs)
+  save_epochs: 1
+  # Keep last N checkpoints
+  keep_last: 5
+  # Keep best N checkpoints
+  keep_best: 3
+  # Best metric to track
+  best_metric: "compression_ratio"
+  # Best metric mode: min | max
+  best_mode: "max"
+  # Checkpoint components
+  save_components:
+    model: true
+    optimizer: true
+    scheduler: true
+    scaler: true
+    rng_state: true
+    compression_state: true
+  # Checkpoint format: pytorch | safetensors
+  format: safetensors
+  # Compression for checkpoints
+  compress: true
+  # Upload to cloud
+  cloud_upload:
+    enabled: false
+    provider: "s3"  # s3 | gcs | azure
+    bucket: "${CHECKPOINT_BUCKET}"
+    prefix: "rcc_experiments/"
+
+# Logging configuration
+logging:
+  # Log level: DEBUG | INFO | WARNING | ERROR | CRITICAL
+  level: INFO
+  # Log format
+  format: "[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s"
+  # Date format
+  date_format: "%Y-%m-%d %H:%M:%S"
+  # Console logging
+  console:
+    enabled: true
+    level: INFO
+    color: true
+  # File logging
+  file:
+    enabled: true
+    level: DEBUG
+    path: "${OUTPUT_DIR}/logs/${EXPERIMENT_NAME}.log"
+    max_size: "100MB"
+    backup_count: 5
+  # Structured logging
+  structured:
+    enabled: true
+    format: json
+    path: "${OUTPUT_DIR}/logs/${EXPERIMENT_NAME}.json"
+  # Log specific components
+  components:
+    model: DEBUG
+    compression: DEBUG
+    training: INFO
+    data: INFO
+    optimizer: INFO
+    evaluation: INFO
+
+# Output configuration
+output:
+  # Base output directory
+  base_dir: "${OUTPUT_DIR:-/output/rcc_experiments}"
+  # Experiment-specific directory
+  experiment_dir: "${OUTPUT_DIR}/${EXPERIMENT_NAME}"
+  # Directory structure
+  structure:
+    checkpoints: "checkpoints"
+    logs: "logs"
+    tensorboard: "tensorboard"
+    figures: "figures"
+    results: "results"
+    configs: "configs"
+    artifacts: "artifacts"
+  # Save configurations
+  save_configs: true
+  # Save model architecture
+  save_architecture: true
+  # Save compression statistics
+  save_compression_stats: true
+  # Save final model
+  save_final_model: true
+  # Export formats: onnx | torchscript | tflite
+  export_formats:
+    - onnx
+    - torchscript
+
+# Evaluation configuration
+evaluation:
+  # Evaluation frequency (steps)
+  eval_frequency: 500
+  # Evaluation frequency (epochs)
+  eval_epochs: 1
+  # Evaluation metrics
+  metrics:
+    # Performance metrics
+    performance:
+      - accuracy
+      - top5_accuracy
+      - perplexity
+      - bleu
+      - rouge
+      - meteor
+      - cider
+      - clip_score
+    # Compression metrics
+    compression:
+      - compression_ratio
+      - parameter_count
+      - model_size_mb
+      - sparsity_ratio
+      - rank_reduction_ratio
+    # Efficiency metrics
+    efficiency:
+      - inference_time_ms
+      - throughput_samples_per_sec
+      - memory_usage_mb
+      - flops
+      - macs
+  # Benchmarks to run
+  benchmarks:
+    # Zero-shot evaluation
+    zero_shot:
+      enabled: true
+      tasks: ["imagenet", "coco_captions"]
+    # Few-shot evaluation
+    few_shot:
+      enabled: true
+      num_shots: [1, 5, 10]
+      tasks: ["imagenet", "coco_captions"]
+    # Transfer learning evaluation
+    transfer:
+      enabled: false
+      datasets: ["cifar10", "cifar100"]
+  # Save evaluation results
+  save_results: true
+  # Results format: json | csv | both
+  results_format: both
+
+# Hyperparameter optimization configuration
+hyperparam_optimization:
+  # Enable hyperparameter optimization
+  enabled: true
+  # Optimization framework: optuna | ray_tune | hyperopt
+  framework: optuna
+  # Number of trials
+  n_trials: 100
+  # Optimization metric
+  metric: "compression_ratio_with_performance"
+  # Optimization direction: minimize | maximize
+  direction: maximize
+  # Parallel trials
+  n_jobs: 4
+  # Timeout (hours)
+  timeout: 48
+  # Sampler: tpe | random | grid | cmaes
+  sampler: tpe
+  # Pruner: median | hyperband | successive_halving
+  pruner: hyperband
+  # Save study
+  save_study: true
+  # Study name
+  study_name: "${EXPERIMENT_NAME}_optimization"
+  # Storage (for distributed optimization)
+  storage: "sqlite:///${OUTPUT_DIR}/optuna/${EXPERIMENT_NAME}.db"
+
+# Resource management
+resources:
+  # GPU allocation
+  gpus:
+    # Number of GPUs
+    num_gpus: 4
+    # GPU IDs to use
+    gpu_ids: [0, 1, 2, 3]
+    # GPU memory fraction
+    memory_fraction: 0.95
+  # CPU allocation
+  cpu:
+    # Number of CPU cores
+    num_cores: 32
+    # CPU affinity
+    affinity: null
+  # Memory limits
+  memory:
+    # Maximum RAM usage (GB)
+    max_ram: 128
+    # Maximum shared memory (GB)
+    max_shm: 32
+  # Storage
+  storage:
+    # Minimum free space required (GB)
+    min_free_space: 100
+    # Temporary directory
+    temp_dir: "/tmp/rcc_experiments"
+
+# Experiment validation
+validation:
+  # Pre-experiment validation
+  pre_checks:
+    # Check data availability
+    check_data: true
+    # Check model availability
+    check_model: true
+    # Check GPU availability
+    check_gpu: true
+    # Check disk space
+    check_disk: true
+    # Check dependencies
+    check_deps: true
+  # Post-experiment validation
+  post_checks:
+    # Verify compression targets
+    verify_compression: true
+    # Verify performance retention
+    verify_performance: true
+    # Verify checkpoints
+    verify_checkpoints: true
+    # Generate report
+    generate_report: true
+
+# Experiment phases
+phases:
+  # Phase 1: DARE compression
+  dare:
+    enabled: true
+    config: "compression_configs.yaml#dare"
+    checkpoint: "${OUTPUT_DIR}/checkpoints/dare_best.pt"
+    metrics: ["sparsity", "performance"]
+  # Phase 2: Nullu compression
+  nullu:
+    enabled: true
+    config: "compression_configs.yaml#nullu"
+    checkpoint: "${OUTPUT_DIR}/checkpoints/nullu_best.pt"
+    metrics: ["rank_reduction", "performance"]
+  # Phase 3: AlphaEdit compression
+  alphaedit:
+    enabled: true
+    config: "compression_configs.yaml#alphaedit"
+    checkpoint: "${OUTPUT_DIR}/checkpoints/alphaedit_best.pt"
+    metrics: ["quantization", "performance"]
+  # Phase 4: Final evaluation
+  final_eval:
+    enabled: true
+    comprehensive: true
+    export_model: true
+
+# Environment variables
+environment:
+  # Experiment name
+  EXPERIMENT_NAME: "rcc_cascade_001"
+  # Output directory
+  OUTPUT_DIR: "/output/rcc_experiments"
+  # Data root
+  DATA_ROOT: "/data"
+  # Model cache
+  MODEL_CACHE: "/models"
+  # Checkpoint directory
+  CHECKPOINT_DIR: "/checkpoints"
+  # Timestamp
+  TIMESTAMP: "${datetime.now().strftime('%Y%m%d_%H%M%S')}"
+  # Random UUID
+  RANDOM_UUID: "${uuid.uuid4()}"
+  # Git commit
+  GIT_COMMIT: "${git.rev_parse('HEAD')}"
+  # Git branch
+  GIT_BRANCH: "${git.branch()}"

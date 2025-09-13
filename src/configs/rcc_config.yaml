@@ -1,0 +1,152 @@
+# Recursive Cascade Compression (RCC) Configuration
+# Achieves >99.5% compression on Vision-Language Models
+
+model:
+  type: "clip"  # Model type: clip, blip
+  name: "openai/clip-vit-base-patch32"  # Model checkpoint
+  compress_vision: true  # Compress vision encoder
+  compress_text: true  # Compress text encoder
+  preserve_embeddings: true  # Keep embedding layers intact
+  preserve_final_layers: true  # Keep final 2 layers intact
+
+compression:
+  # Overall compression target
+  target_compression: 0.995  # 99.5% parameter reduction
+  preserve_gradients: true  # Maintain gradient flow
+
+  # DARE pruning configuration
+  dare:
+    sparsity: 0.98  # 98% sparsity target
+    mode: "hybrid"  # unstructured, structured, hybrid
+    importance_metric: "magnitude"  # magnitude, gradient, fisher
+    rescale_weights: true  # Rescale to preserve expected values
+    iterative_pruning: true  # Use iterative pruning
+    pruning_iterations: 10  # Number of pruning iterations
+    polynomial_decay_power: 3.0  # Polynomial schedule power
+
+    # Structured pruning options
+    block_size: null  # Block sparse pattern size
+    n_m_sparsity: null  # N:M structured sparsity pattern
+
+  # Nullu projection configuration
+  nullu:
+    energy_threshold: 0.99  # Preserve 99% energy
+    max_rank_ratio: 0.1  # Maximum 10% of original rank
+    min_rank: 1  # Minimum rank to keep
+    rank_selection_method: "energy"  # energy, fixed, adaptive
+    layer_wise_adaptation: true  # Adapt rank per layer
+    use_randomized_svd: true  # Use randomized SVD for speed
+    power_iterations: 2  # Power iterations for randomized SVD
+    preserve_null_space: true  # Track null space preservation
+
+  # AlphaEdit configuration
+  alphaedit:
+    alpha_init: 1.0  # Initial alpha value
+    alpha_learning_rate: 0.001  # Alpha optimization LR
+    alpha_momentum: 0.9  # Alpha optimizer momentum
+    alpha_regularization: 0.0001  # L2 regularization for alphas
+    min_alpha: 0.1  # Minimum alpha value
+    max_alpha: 10.0  # Maximum alpha value
+    use_fisher_information: true  # Use Fisher info for importance
+    fisher_num_samples: 1000  # Samples for Fisher estimation
+    use_layer_wise_alphas: true  # Layer-wise scaling
+    use_channel_wise_alphas: false  # Channel-wise scaling
+
+training:
+  # Basic training configuration
+  num_epochs: 30  # Total training epochs
+  batch_size: 128  # Training batch size
+  eval_batch_size: 256  # Evaluation batch size
+  learning_rate: 0.0001  # Initial learning rate
+  weight_decay: 0.0001  # Weight decay
+  gradient_clip: 1.0  # Gradient clipping value
+  gradient_accumulation_steps: 1  # Gradient accumulation
+
+  # Optimization
+  optimizer: "adamw"  # Optimizer: adamw, adam, sgd
+  scheduler: "cosine"  # Scheduler: cosine, linear, constant
+  warmup_steps: 1000  # Warmup steps
+  mixed_precision: true  # Use mixed precision training
+  gradient_checkpointing: true  # Use gradient checkpointing
+
+  # Knowledge distillation
+  use_distillation: true  # Use knowledge distillation
+  temperature: 4.0  # Distillation temperature
+  alpha_distill: 0.7  # Distillation loss weight
+  feature_distill_weight: 0.1  # Feature distillation weight
+  attention_distill_weight: 0.1  # Attention distillation weight
+
+  # Checkpointing
+  save_frequency: 1  # Save checkpoint every N epochs
+  eval_frequency: 1  # Evaluate every N epochs
+  checkpoint_dir: "./checkpoints"  # Checkpoint directory
+  resume_from: null  # Resume from checkpoint path
+
+data:
+  # Dataset configuration
+  dataset: "imagenet"  # Dataset name
+  data_dir: "./data"  # Data directory
+  num_train_samples: 1281167  # ImageNet train samples
+  num_val_samples: 50000  # ImageNet val samples
+  image_size: 224  # Input image size
+  num_classes: 1000  # Number of classes
+
+  # Data loading
+  num_workers: 4  # DataLoader workers
+  pin_memory: true  # Pin memory for GPU
+  prefetch_factor: 2  # Prefetch factor
+
+  # Augmentation
+  use_augmentation: true  # Use data augmentation
+  augmentation_strength: 0.9  # RandAugment strength
+
+evaluation:
+  # Metrics to compute
+  metrics:
+    - "accuracy"  # Top-1 accuracy
+    - "top5_accuracy"  # Top-5 accuracy
+    - "retrieval_r1"  # Retrieval R@1
+    - "retrieval_r5"  # Retrieval R@5
+    - "retrieval_r10"  # Retrieval R@10
+    - "compression_ratio"  # Compression metrics
+    - "inference_time"  # Inference latency
+
+  # Zero-shot evaluation
+  zero_shot_datasets:
+    - "imagenet"
+    - "cifar10"
+    - "cifar100"
+
+  # Benchmarks
+  run_benchmarks: true  # Run full benchmark suite
+  benchmark_samples: 10000  # Samples for benchmarking
+
+distributed:
+  # Distributed training configuration
+  enabled: false  # Enable distributed training
+  backend: "nccl"  # Distributed backend
+  world_size: 1  # Number of GPUs
+  find_unused_parameters: false  # DDP option
+
+logging:
+  # Logging configuration
+  use_wandb: true  # Use Weights & Biases
+  project_name: "rcc-compression"  # W&B project
+  experiment_name: "rcc-clip-vit-base"  # Experiment name
+  log_frequency: 100  # Log every N steps
+  save_logs: true  # Save logs to file
+  log_dir: "./logs"  # Log directory
+
+hardware:
+  # Hardware configuration
+  device: "cuda"  # Device: cuda, cpu
+  cuda_deterministic: true  # Deterministic CUDA
+  cuda_benchmark: false  # CUDA benchmark mode
+  seed: 42  # Random seed
+
+# Performance targets (for validation)
+targets:
+  min_compression_ratio: 0.995  # Minimum 99.5% compression
+  min_accuracy_retention: 0.95  # Minimum 95% accuracy retention
+  max_inference_latency_ms: 5  # Maximum 5ms latency increase
+  max_memory_mb: 1500  # Maximum 1.5GB memory
